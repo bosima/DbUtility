@@ -1,2 +1,2 @@
-# DbQueryUtility
-Relational database query utility class library.
+# DbUtility
+Relational database operation utility class library.
