@@ -1,0 +1,388 @@
+﻿<#@ template language="c#" HostSpecific="True" #>
+<#@ output extension= ".cs" #>
+<#
+//   注sql参数中Guid有位数限制，需要手动去掉
+
+
+	TableHost host = (TableHost)(Host);	
+	string DbParaHead=host.DbParaHead;
+	string DbParaDbType=host.DbParaDbType;
+	string preParameter=host.preParameter;
+	host.DbType = "SQL2008";
+	
+	string classname=host.GetModelClass(host.TableName).Replace("TBL_","");		
+	host.NameSpace="Demo.ModelQuery";	
+	string ModelSpace = host.NameSpace + ".Model."+ classname+"Model";
+	string QueryModelSpace = host.NameSpace + ".Model." + classname + "QueryModel";
+	
+	ColumnInfo identityKey=host.IdentityKey;
+	string returnValue = "void";
+    if (identityKey!=null)
+    {         
+         returnValue = CodeCommon.DbTypeToCS(identityKey.TypeName);              
+    }
+#>
+using FireflySoft.DbUtility;
+using FireflySoft.DbUtility.ModelQuery;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Text;
+
+namespace <#= host.NameSpace #>.DAL
+<# if( host.Folder.Length > 0){ #>
+	.<#= host.Folder #>
+<# } #>
+{
+	<# if( host.TableDescription.Length > 0) {#>
+/// <summary>
+	/// <#= host.TableDescription #>
+	/// </summary>
+	<# } #>
+public partial class <#=classname  #>DAL
+	{   
+		public bool Exists(<#= CodeCommon.GetInParameter(host.Keys, false) #>)
+		{
+			StringBuilder strSql=new StringBuilder();
+			strSql.Append("select count(1) from <#= host.TableName #>");
+			strSql.Append(" where ");
+<# for(int i=0;i< host.Keys.Count;i++){ColumnInfo key = host.Keys[i]; #>
+			<# if (key.IsPrimaryKey || !key.IsIdentity){#>strSql.Append(" <#= key.ColumnName#> = <#=preParameter#><#=key.ColumnName#> <# if (i< host.Keys.Count-1 ) {#>and <#}#> ");
+<#}#>
+<# }#>
+<#= CodeCommon.GetPreParameter(host.Keys, false, host.DbType) #>
+			return <#= host.DbHelperName#>.Exists(strSql.ToString(),parameters);
+		}		
+		
+		/// <summary>
+		/// 增加一条数据
+		/// </summary>
+		public int Add(<#= ModelSpace #> model)
+		{
+			StringBuilder strSql=new StringBuilder();
+			strSql.Append("insert into <#= host.TableName #>(");			
+            strSql.Append("<# for(int i=0;i< host.Fieldlist.Count;i++) {   ColumnInfo c = host.Fieldlist[i]; if (!c.IsIdentity) {#>[<#= c.ColumnName#>]<# if (i< host.Fieldlist.Count-1 ) {#>,<#}#><#}}#>");
+			strSql.Append(") values (");
+            strSql.Append("<# for(int i=0;i< host.Fieldlist.Count;i++) {   ColumnInfo c = host.Fieldlist[i]; if (!c.IsIdentity) {#><#=preParameter#><#= c.ColumnName#><# if (i< host.Fieldlist.Count-1 ) {#>,<#}#><#}}#>");            
+            strSql.Append(") ");            
+            <#if (identityKey!=null) {#>strSql.Append(";select @@IDENTITY");<#}#>		
+			SqlParameter[] parameters = {
+			<# for(int i=0;i< host.Fieldlist.Count;i++)
+            {   
+            ColumnInfo c = host.Fieldlist[i];
+            if(c.IsIdentity) continue;
+            #>
+            new SqlParameter("<#=preParameter#><#=c.ColumnName#>", SqlDbType.<#=CodeCommon.DbTypeLength(host.DbType, c.TypeName, c.Length)#>) <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#>            
+            <# }#>  
+            };
+			<# foreach (ColumnInfo c in host.Fieldlist) { if(c.IsIdentity) continue;#>            
+            parameters[<#= n #>].Value = model.<#=c.ColumnName#>;<# n=n+1; #>
+            <# }#>
+            
+			<#if (identityKey!=null) {#>   
+			object obj = <#= host.DbHelperName#>.GetSingle(strSql.ToString(),parameters);			
+			if (obj == null)
+			{
+				return 0;
+			}
+			else
+			{
+				<# if ( returnValue=="int" ) 
+				{#>                    
+            	return Convert.ToInt32(obj);
+                <#}#>
+                <# if ( returnValue=="long" ) 
+				{#>                    
+            	return Convert.ToInt64(obj);
+                <#}#>
+                <# if ( returnValue=="decimal" ) 
+				{#>                    
+            	return Convert.ToDecimal(obj);
+                <#}#>                  
+			}			   
+            <#} else {#>
+            
+			int rows = <#= host.DbHelperName#>.ExecuteSql(strSql.ToString(),parameters);
+			if(rows>0)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+<#}#>
+		}
+		
+		/// <summary>
+		/// 更新一条数据
+		/// </summary>
+		public bool Update(<#= ModelSpace #> model)
+		{
+			StringBuilder strSql=new StringBuilder();
+			strSql.Append("update <#= host.TableName #> set ");
+			<# for(int i=0;i< host.Fieldlist.Count;i++)
+            {   ColumnInfo c = host.Fieldlist[i]; #>
+            <# if (!c.IsIdentity) {#>            
+            strSql.Append(" [<#= c.ColumnName #>] = <#=preParameter#><#=c.ColumnName#> <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#> ");<# }#>
+            <# }#>			
+			strSql.Append(" where <#= CodeCommon.GetWhereParameterExpression(host.Keys, true ,host.DbType) #> ");
+						
+			SqlParameter[] parameters = {
+			<# for(int i=0;i< host.Fieldlist.Count;i++)
+            {   ColumnInfo c = host.Fieldlist[i]; #>
+            new SqlParameter("<#=preParameter#><#=c.ColumnName#>", SqlDbType.<#=CodeCommon.DbTypeLength(host.DbType, c.TypeName, c.Length)#>) <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#>
+            
+            <# }#>  
+            };
+            <#  n=0; #>
+			<# foreach (ColumnInfo c in host.Fieldlist) { #>            
+            parameters[<#= n #>].Value = model.<#=c.ColumnName#>;<# n=n+1; #>
+            <# }#>
+            
+            int rows=<#= host.DbHelperName#>.ExecuteSql(strSql.ToString(),parameters);
+			if (rows > 0)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		/// <summary>
+		/// 删除一条数据
+		/// </summary>
+		public bool Delete(<#=CodeCommon.GetInParameter(host.Keys, true)#>)
+		{
+			
+			StringBuilder strSql=new StringBuilder();
+			strSql.Append("delete from <#= host.TableName #> ");
+			strSql.Append(" where <#= CodeCommon.GetWhereParameterExpression(host.Keys, true, host.DbType)#>");
+			<#= CodeCommon.GetPreParameter(host.Keys, true, host.DbType) #>
+
+			int rows=<#= host.DbHelperName#>.ExecuteSql(strSql.ToString(),parameters);
+			if (rows > 0)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		<#if (identityKey!=null) {#>
+		/// <summary>
+		/// 删除一条数据
+		/// </summary>
+		public bool DeleteList(string <#=identityKey.ColumnName#>list )
+		{
+			StringBuilder strSql=new StringBuilder();
+			strSql.Append("delete from <#= host.TableName #> ");
+			strSql.Append(" where ID in ("+<#=identityKey.ColumnName#>list + ")  ");
+			int rows=<#= host.DbHelperName#>.ExecuteSql(strSql.ToString());
+			if (rows > 0)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		<#}#>
+			/// <summary>
+		/// 获得数据列表
+		/// </summary>
+		private List<<#= ModelSpace #>> DataTableToList(DataTable dt)
+		{
+			List<<#= ModelSpace #>> modelList = new List<<#= ModelSpace #>>();
+			int rowsCount = dt.Rows.Count;
+			if (rowsCount > 0)
+			{
+				<#= ModelSpace #> model;
+				for (int n = 0; n < rowsCount; n++)
+				{
+					model = new <#= ModelSpace #>();					
+<# foreach (ColumnInfo c in host.Fieldlist) { #>
+<# if(CodeCommon.DbTypeToCS(c.TypeName)=="int"
+|| CodeCommon.DbTypeToCS(c.TypeName)=="long"
+||CodeCommon.DbTypeToCS(c.TypeName)=="float"
+||CodeCommon.DbTypeToCS(c.TypeName)=="DateTime"
+||CodeCommon.DbTypeToCS(c.TypeName)=="decimal")
+{#>
+if(dt.Rows[n]["<#=c.ColumnName#>"].ToString()!="")
+{
+	model.<#=c.ColumnName#>=<#=CodeCommon.DbTypeToCS(c.TypeName)#>.Parse(dt.Rows[n]["<#=c.ColumnName#>"].ToString());
+}
+<# }else if(CodeCommon.DbTypeToCS(c.TypeName)=="string") {#>
+model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
+<# } #>
+				<# if(CodeCommon.DbTypeToCS(c.TypeName)=="byte[]") {#>
+				if(dt.Rows[n]["<#=c.ColumnName#>"].ToString()!="")
+				{
+					model.<#=c.ColumnName#>= (byte[])dt.Rows[n]["<#=c.ColumnName#>"];
+				}
+				<# } #>
+				<# if(CodeCommon.DbTypeToCS(c.TypeName)=="Guid") {#>
+				if(dt.Rows[n]["<#=c.ColumnName#>"].ToString()!="")
+				{
+					model.<#=c.ColumnName#>= new Guid( dt.Rows[n]["<#=c.ColumnName#>"].ToString());
+				}
+				<# } #>
+				<# if(CodeCommon.DbTypeToCS(c.TypeName)=="bool") {#>
+				if(dt.Rows[n]["<#=c.ColumnName#>"].ToString()!="")
+				{
+					if((dt.Rows[n]["<#=c.ColumnName#>"].ToString()=="1")||(dt.Rows[n]["<#=c.ColumnName#>"].ToString().ToLower()=="true"))
+					{
+					model.<#=c.ColumnName#>= true;
+					}
+					else
+					{
+					model.<#=c.ColumnName#>= false;
+					}
+				}
+				<# } #>
+				<# } #>		
+				
+					modelList.Add(model);
+				}
+			}
+			return modelList;
+		}
+		
+		/// <summary>
+		/// 得到一个对象实体
+		/// </summary>
+		public <#= ModelSpace #> GetModel(<#= CodeCommon.GetInParameter(host.Keys,true) #>)
+		{
+			
+			StringBuilder strSql=new StringBuilder();
+			strSql.Append("select * ");			
+			strSql.Append("  from <#= host.TableName #> ");
+			strSql.Append(" where <#= CodeCommon.GetWhereParameterExpression(host.Keys, true, host.DbType) #>");
+			<#=CodeCommon.GetPreParameter(host.Keys, true, host.DbType)#>
+			
+			<#=ModelSpace#> model=new <#=ModelSpace#>();
+			DataSet ds=<#= host.DbHelperName#>.Query(strSql.ToString(),parameters);
+			
+			if(ds.Tables[0].Rows.Count>0)
+			{
+				return DataTableToList(ds.Tables[0])[0];
+			}
+			else
+			{
+				return null;
+			}
+		}
+		
+		/// <summary>
+		/// 获取符合查询条件的全部数据
+		/// </summary>
+		public List<<#= ModelSpace #>> GetList(<#=QueryModelSpace#> query)
+		{
+		 	// 从查询条件获取SQL条件语句
+            string strWhere = ConditionToSql.ToSqlText(query.Condition);
+            SqlParameter[] paras = ConditionToSql.ToSqlParas(query.Condition);
+            
+            // 构造SQL查询语句
+			StringBuilder strSql=new StringBuilder();
+			strSql.Append("select * ");
+			strSql.Append(" FROM <#= host.TableName #> ");
+			if(strWhere.Trim()!="")
+			{
+				strSql.Append(" where "+strWhere);
+			}
+			
+			// 执行查询
+			DataSet ds = <#= host.DbHelperName#>.Query(strSql.ToString(), paras);
+			
+			// 转换查询结果为List<T>,并返回
+            return DataTableToList(ds.Tables[0]);
+		}
+		
+		/// <summary>
+		/// 获取符合查询条件的前几行数据
+		/// </summary>
+		public List<<#= ModelSpace #>> GetList(int Top,<#=QueryModelSpace#> query,string filedOrder)
+		{
+			// 从查询条件获取SQL条件语句
+            string strWhere = ConditionToSql.ToSqlText(query.Condition);
+            SqlParameter[] paras = ConditionToSql.ToSqlParas(query.Condition);
+            
+            // 构造SQL查询语句
+			StringBuilder strSql=new StringBuilder();
+			strSql.Append("select ");
+			if(Top>0)
+			{
+				strSql.Append(" top "+Top.ToString());
+			}
+			strSql.Append(" * ");
+			strSql.Append(" FROM <#= host.TableName #> ");
+			if(strWhere.Trim()!="")
+			{
+				strSql.Append(" where "+strWhere);
+			}
+			strSql.Append(" order by " + filedOrder);
+			
+			
+			// 执行查询
+			DataSet ds = <#= host.DbHelperName#>.Query(strSql.ToString(), paras);
+			
+			// 转换查询结果为List<T>,并返回
+            return DataTableToList(ds.Tables[0]);
+		}
+		
+	    /// <summary>
+		/// 获取符合查询条件的全部记录数
+		/// </summary>
+		public int InfoCount(<#=QueryModelSpace#> query)
+		{
+		 	// 从查询条件获取SQL条件语句
+            string strWhere = ConditionToSql.ToSqlText(query.Condition);
+            SqlParameter[] paras = ConditionToSql.ToSqlParas(query.Condition);
+            
+			return InfoCount(strWhere,paras);
+		}
+		/// <summary>
+        /// 获得记录数，不包含逻辑删除记录
+        /// </summary>
+        private int InfoCount(string strWhere, SqlParameter[] paras)
+        {
+            string strTableName = "<#= host.TableName #>";
+            return DbHelperSQL.GetCount(strTableName, strWhere, paras);
+        }
+		
+		/// <summary>
+        /// 获取符合查询条件的分页数据
+        /// </summary>
+        /// <param name="query">查询条件</param>
+        /// <param name="page">分页条件</param>
+        /// <returns></returns>
+        public List<<#= ModelSpace #>> GetList(<#=QueryModelSpace#> query, string sortFiled, ref PageInfo page)
+        {
+        	//if(string.IsNullOrEmpty(sortFiled)){
+        	//	sortFiled="AddTime DESC";
+        	//}
+        	
+            // 从查询条件获取SQL条件语句
+            string strWhere = ConditionToSql.ToSqlText(query.Condition);
+            SqlParameter[] paras = ConditionToSql.ToSqlParas(query.Condition);
+
+            // 总记录数
+            page.RecordCount = InfoCount(strWhere, paras);
+
+            // 分页数据
+            string strSQL = PageQueryHelper.GetPageSQL(page.CurrentPage, page.PageSize, strWhere, sortFiled, "<#= host.TableName #>", "<# for(int i=0;i< host.Keys.Count;i++){ColumnInfo key = host.Keys[i]; #><#=key.ColumnName #><#if(host.Keys.Count>1 && i<host.Keys.Count-1){#>+<#}#><#}#>");
+            DataSet ds = DbHelperSQL.Query(strSQL, paras);
+            
+            return DataTableToList(ds.Tables[0]);
+        }
+	}
+}
+<#+
+int n=0;
+#>

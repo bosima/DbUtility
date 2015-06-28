@@ -1,0 +1,189 @@
+﻿<#@ template language="c#" HostSpecific="True" #>
+<#@ output extension= ".cs" #>
+<#
+	TableHost host = (TableHost)(Host);
+	host.NameSpace="Demo.ModelQuery";
+	string classname=host.GetModelClass(host.TableName).Replace("TBL_","");	
+	string ModelSpace = host.NameSpace + ".Model";
+	string QueryModelSpace = classname +"QueryModel";
+	host.Fieldlist.Sort(CodeCommon.CompareByintOrder);
+#>using System;
+using System.Text;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Data.SqlTypes;
+using FireflySoft.DbUtility.ModelQuery;
+
+namespace <#=host.NameSpace #>.Model
+{
+
+<# if( host.TableDescription.Length > 0) {#>
+/// <summary>
+/// <#= host.TableDescription #>
+/// </summary>
+<# } #>
+public partial class <#=QueryModelSpace #>
+{
+   		private List<QueryCondition> m_ConditionList = null;
+        private QueryCondition[] m_Condition = null;
+
+        public <#=QueryModelSpace  #>()
+        {
+            m_ConditionList = new List<QueryCondition>();
+        }
+        
+   		/// <summary>
+        /// 查询条件
+        /// </summary>
+        public QueryCondition[] Condition
+        {
+            get
+            {
+                return m_ConditionList.ToArray();
+            }
+
+            set
+            {
+                // 从客户端传递过来的QueryCondition，首先加入到List中
+                m_Condition = value;
+
+                if (value != null)
+                {
+                    foreach (QueryCondition temp in value)
+                    {
+                        m_ConditionList.Add(temp);
+                    }
+                }
+            }
+        }
+      	<# foreach (ColumnInfo c in host.Fieldlist)
+		{ #>
+		
+		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime")
+		{#>
+		/// <summary>
+		/// <#= string.IsNullOrEmpty(c.Description) ? c.ColumnName : c.Description #>
+        /// </summary>		
+        public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=(CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))?"?":"") #> before<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
+        { 
+         get
+            {
+                var con = m_ConditionList.Where(t => t.ConditionName == "<#= c.ColumnName #>").Where(t => t.CompareType == CompareType.GET).FirstOrDefault();
+                if (con != null)
+                {
+                    return (<#= CodeCommon.DbTypeToCS(c.TypeName) #>)con.Value;
+                }
+                
+        <# if(c.Nullable&&CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))){ #>
+        return null;
+        <# } else{#>     
+		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime"){ #>
+        return SqlDateTime.MinValue.Value;
+        <# } #>
+        <# } #>
+}
+
+            set
+            {
+            	if(value!=null){
+	            	m_ConditionList.Add(new QueryCondition()
+	                {
+	                    CompareType = CompareType.GET,
+	                    LinkType = LinkType.And,
+	                    Property = "<#= c.ColumnName #>",
+	                    ConditionName = "<#= c.ColumnName #>",
+	                    Value = value
+	                });
+                }
+            }
+        }        
+        
+        /// <summary>
+		/// <#= string.IsNullOrEmpty(c.Description) ? c.ColumnName : c.Description #>
+        /// </summary>		
+     public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=((CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName)) ) ? "?":"") #> after<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
+        {
+        get
+            { 
+                var con = m_ConditionList.Where(t => t.ConditionName == "<#= c.ColumnName #>").Where(t => t.CompareType == CompareType.LET).FirstOrDefault();
+                if (con != null)
+                {
+                    return (<#= CodeCommon.DbTypeToCS(c.TypeName) #>)con.Value;
+                }
+                
+        <# if(c.Nullable&&CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))){ #>
+        return null;
+        <# } else{#> 
+		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime"){ #>
+        return SqlDateTime.MinValue.Value;
+        <# } #>
+        <# } #>
+}
+            set
+            {
+            	if(value!=null){
+	            	m_ConditionList.Add(new QueryCondition()
+	                {
+	                    CompareType = CompareType.LET,
+	                    LinkType = LinkType.And,
+	                    Property = "<#= c.ColumnName #>",
+	                    ConditionName = "<#= c.ColumnName #>",
+	                    Value = value
+	                });
+                }
+            }
+        }      
+		<# }else{ #>
+/// <summary>
+		/// <#= string.IsNullOrEmpty(c.Description) ? c.ColumnName : c.Description #>
+		/// </summary>
+        public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=(CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName)) ||  c.TypeName=="uniqueidentifier"||  c.TypeName=="bit" ?"?":"") #> <#= c.ColumnName #>
+        {
+         	get
+            {
+                var con = m_ConditionList.Where(t => t.ConditionName == "<#= c.ColumnName #>").FirstOrDefault();
+                if (con != null)
+                {
+                    return (<#= CodeCommon.DbTypeToCS(c.TypeName) #>)con.Value;
+                }
+                
+        <# if(c.Nullable&&CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))){ #>
+        return null;
+        <# } else{#>    
+		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime"){ #>
+        return SqlDateTime.MinValue.Value;
+        <# }else if(CodeCommon.DbTypeToCS(c.TypeName)=="int"){ #>
+        return null;
+        <# }else if(CodeCommon.DbTypeToCS(c.TypeName)=="float"){ #>
+        return null;
+        <# }else if(CodeCommon.DbTypeToCS(c.TypeName)=="decimal"){ #>
+        return null;
+        <# }else if(CodeCommon.DbTypeToCS(c.TypeName)=="string"){ #>
+        return null;
+         <# }else if(CodeCommon.DbTypeToCS(c.TypeName)=="bool"){ #>
+        return null;
+        <# }else if(CodeCommon.DbTypeToCS(c.TypeName)=="Guid"){ #>
+        return null;
+        <# } #>
+        <# } #>
+}
+            
+            set
+            {
+            	if(value!=null){
+	            	m_ConditionList.Add(new QueryCondition()
+	                {
+	                    CompareType = CompareType.Equal,
+	                    LinkType = LinkType.And,
+	                    Property = "<#= c.ColumnName #>",
+	                    ConditionName = "<#= c.ColumnName #>",
+	                    Value = value
+	                });
+                }
+            }
+        }
+   		<# } #>
+   		<# } #>
+}
+}

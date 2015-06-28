@@ -1,0 +1,128 @@
+﻿<#@ template language="c#" HostSpecific="True" #>
+<#@ output extension= ".cs" #>
+<#
+//   注sql参数中Guid有位数限制，需要手动去掉
+
+
+	TableHost host = (TableHost)(Host);	
+	string DbParaHead=host.DbParaHead;
+	string DbParaDbType=host.DbParaDbType;
+	string preParameter=host.preParameter;
+	host.DbType = "SQL2008";
+	
+	string classname=host.GetModelClass(host.TableName).Replace("TBL_","");		
+	host.NameSpace="Demo.ModelQuery";	
+	string DALSpace = host.NameSpace + ".DAL."+ classname+"DAL";
+	string ModelSpace = host.NameSpace + ".Model."+ classname+"Model";
+	string QueryModelSpace = host.NameSpace + ".Model." + classname + "QueryModel";
+	
+	ColumnInfo identityKey=host.IdentityKey;
+	string returnValue = "void";
+    if (identityKey!=null)
+    {         
+         returnValue = CodeCommon.DbTypeToCS(identityKey.TypeName);              
+    }
+#>
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Text;
+using <#=host.NameSpace #>.Query;
+using <#=host.NameSpace #>.Model;
+
+namespace <#= host.NameSpace #>.BLL
+<# if( host.Folder.Length > 0){ #>
+	.<#= host.Folder #>
+<# } #>
+{
+	<# if( host.TableDescription.Length > 0) {#>
+ 	//<#= host.TableDescription #>
+	<# } #>
+public partial class <#=classname #>BLL
+	{   
+		private <#= DALSpace #> _dal = new <#= DALSpace #>();
+	
+		public bool Exists(<#= CodeCommon.GetInParameter(host.Keys, false).ToLower() #>)
+		{
+			return _dal.Exists(<#= CodeCommon.GetFieldstrlist(host.Keys, false).ToLower() #>);
+		}		
+		
+		/// <summary>
+		/// 增加一条数据
+		/// </summary>
+		public int Add(<#= ModelSpace #> model)
+		{
+			return _dal.Add(model);
+		}
+		
+		/// <summary>
+		/// 更新一条数据
+		/// </summary>
+		public bool Update(<#= ModelSpace #> model)
+		{
+			return _dal.Update(model);
+		}
+		
+		/// <summary>
+		/// 删除一条数据
+		/// </summary>
+		public bool Delete(<#=CodeCommon.GetInParameter(host.Keys,true).ToLower() #>)
+		{
+			return _dal.Delete(<#= CodeCommon.GetFieldstrlist(host.Keys,false).ToLower() #>);
+		}
+		
+		<#if (identityKey!=null) {#>
+		/// <summary>
+		/// 删除一条数据
+		/// </summary>
+		public bool DeleteList(string <#=identityKey.ColumnName.ToString().ToLower() #>List)
+		{
+			return _dal.DeleteList(<#=identityKey.ColumnName.ToString().ToLower() #>List);
+		}
+		<#}#>
+		
+		/// <summary>
+		/// 得到一个对象实体
+		/// </summary>
+		public <#= ModelSpace #> GetModel(<#= CodeCommon.GetInParameter(host.Keys,true).ToLower() #>)
+		{
+			return _dal.GetModel(<#= CodeCommon.GetFieldstrlist(host.Keys,false).ToLower() #>);
+		}
+		
+		/// <summary>
+		/// 获取符合查询条件的全部数据
+		/// </summary>
+		public List<<#= ModelSpace #>> GetList(<#=QueryModelSpace#> query)
+		{
+            return _dal.GetList(query);
+		}
+		
+		/// <summary>
+		/// 获取符合查询条件的前几行数据
+		/// </summary>
+		public List<<#= ModelSpace #>> GetList(int top, <#=QueryModelSpace#> query, string filedOrder)
+		{
+			return _dal.GetList(top, query, filedOrder);
+		}
+		
+	    /// <summary>
+		/// 获取符合查询条件的全部记录数
+		/// </summary>
+		public int InfoCount(<#=QueryModelSpace#> query)
+		{
+		 	return _dal.InfoCount(query);
+		}
+		
+		/// <summary>
+        /// 获取符合查询条件的分页数据
+        /// </summary>
+        /// <param name="query">查询条件</param>
+        /// <param name="page">分页条件</param>
+        /// <returns></returns>
+        public List<<#= ModelSpace #>> GetList(<#=QueryModelSpace#> query, string sortFiled, ref PageInfo page)
+        {
+        	return _dal.GetList(query, sortFiled, ref page);
+        }
+	}
+}
