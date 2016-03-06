@@ -378,7 +378,7 @@ namespace Demo.ModelQuery.Model
         /// <summary>
         /// ts
         /// </summary>		
-        public DateTime? beforeTs
+        public DateTime? minTs
         {
             get
             {
@@ -410,7 +410,7 @@ namespace Demo.ModelQuery.Model
         /// <summary>
         /// ts
         /// </summary>		
-        public DateTime? afterTs
+        public DateTime? maxTs
         {
             get
             {

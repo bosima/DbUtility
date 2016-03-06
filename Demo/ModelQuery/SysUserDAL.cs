@@ -24,7 +24,7 @@ namespace Demo.ModelQuery.DAL
 			};
             parameters[0].Value = ID;
 
-            return DbHelperSQL.Exists(strSql.ToString(), parameters);
+            return SQLServerHelper.Exists(strSql.ToString(), parameters);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace Demo.ModelQuery.DAL
             parameters[8].Value = model.Status;
             parameters[9].Value = model.Description;
 
-            object obj = DbHelperSQL.GetSingle(strSql.ToString(), parameters);
+            object obj = SQLServerHelper.GetSingle(strSql.ToString(), parameters);
             if (obj == null)
             {
                 return 0;
@@ -123,7 +123,7 @@ namespace Demo.ModelQuery.DAL
             parameters[8].Value = model.Email;
             parameters[9].Value = model.Status;
             parameters[10].Value = model.Description;
-            int rows = DbHelperSQL.ExecuteSql(strSql.ToString(), parameters);
+            int rows = SQLServerHelper.ExecuteSql(strSql.ToString(), parameters);
             if (rows > 0)
             {
                 return true;
@@ -149,7 +149,7 @@ namespace Demo.ModelQuery.DAL
             parameters[0].Value = ID;
 
 
-            int rows = DbHelperSQL.ExecuteSql(strSql.ToString(), parameters);
+            int rows = SQLServerHelper.ExecuteSql(strSql.ToString(), parameters);
             if (rows > 0)
             {
                 return true;
@@ -168,7 +168,7 @@ namespace Demo.ModelQuery.DAL
             StringBuilder strSql = new StringBuilder();
             strSql.Append("delete from SysUser ");
             strSql.Append(" where ID in (" + IDlist + ")  ");
-            int rows = DbHelperSQL.ExecuteSql(strSql.ToString());
+            int rows = SQLServerHelper.ExecuteSql(strSql.ToString());
             if (rows > 0)
             {
                 return true;
@@ -246,7 +246,7 @@ namespace Demo.ModelQuery.DAL
 
 
             Demo.ModelQuery.Model.SysUserModel model = new Demo.ModelQuery.Model.SysUserModel();
-            DataSet ds = DbHelperSQL.Query(strSql.ToString(), parameters);
+            DataSet ds = SQLServerHelper.Query(strSql.ToString(), parameters);
 
             if (ds.Tables[0].Rows.Count > 0)
             {
@@ -277,7 +277,7 @@ namespace Demo.ModelQuery.DAL
             }
 
             // 执行查询
-            DataSet ds = DbHelperSQL.Query(strSql.ToString(), paras);
+            DataSet ds = SQLServerHelper.Query(strSql.ToString(), paras);
 
             // 转换查询结果为List<T>,并返回
             return DataTableToList(ds.Tables[0]);
@@ -309,7 +309,7 @@ namespace Demo.ModelQuery.DAL
 
 
             // 执行查询
-            DataSet ds = DbHelperSQL.Query(strSql.ToString(), paras);
+            DataSet ds = SQLServerHelper.Query(strSql.ToString(), paras);
 
             // 转换查询结果为List<T>,并返回
             return DataTableToList(ds.Tables[0]);
@@ -332,7 +332,7 @@ namespace Demo.ModelQuery.DAL
         private int InfoCount(string strWhere, SqlParameter[] paras)
         {
             string strTableName = "SysUser";
-            return DbHelperSQL.GetCount(strTableName, strWhere, paras);
+            return SQLServerHelper.GetCount(strTableName, strWhere, paras);
         }
 
         /// <summary>
@@ -356,7 +356,7 @@ namespace Demo.ModelQuery.DAL
 
             // 分页数据
             string strSQL = PageQueryHelper.GetPageSQL(page.CurrentPage, page.PageSize, strWhere, sortFiled, "SysUser", "ID");
-            DataSet ds = DbHelperSQL.Query(strSQL, paras);
+            DataSet ds = SQLServerHelper.Query(strSQL, paras);
 
             return DataTableToList(ds.Tables[0]);
         }

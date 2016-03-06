@@ -5,6 +5,9 @@ using System.Text;
 
 namespace FireflySoft.DbUtility.ModelQuery
 {
+    /// <summary>
+    /// 将QueryCondition数组转换为SQLServer查询语句
+    /// </summary>
     public class ConditionToSql
     {
         /// <summary>
@@ -202,11 +205,11 @@ namespace FireflySoft.DbUtility.ModelQuery
             {
                 if (conditon.CompareType == CompareType.GET || conditon.CompareType == CompareType.GT)
                 {
-                    parameterName = "@before" + conditionName;
+                    parameterName = "@min" + conditionName;
                 }
                 else if (conditon.CompareType == CompareType.LT || conditon.CompareType == CompareType.LET)
                 {
-                    parameterName = "@after" + conditionName;
+                    parameterName = "@max" + conditionName;
                 }
                 else
                 {
@@ -274,13 +277,13 @@ namespace FireflySoft.DbUtility.ModelQuery
             {
                 if (conditon.CompareType == CompareType.GET || conditon.CompareType == CompareType.GT)
                 {
-                    parameterName = "@before" + conditionName;
+                    parameterName = "@min" + conditionName;
                 }
                 else
                 {
                     if (conditon.CompareType == CompareType.LT || conditon.CompareType == CompareType.LET)
                     {
-                        parameterName = "@after" + conditionName;
+                        parameterName = "@max" + conditionName;
                     }
                     else
                     {

@@ -2,8 +2,13 @@
 <#@ output extension= ".cs" #>
 <#
 	TableHost host = (TableHost)(Host);
-	host.NameSpace="Demo.ModelQuery";
-	string classname=host.GetModelClass(host.TableName).Replace("TBL_","");	
+	host.NameSpace="FireflySoft";
+	string classname=host.GetModelClass(host.TableName).Replace("TBL_","").Replace("v_","V");	
+	if( host.TableDescription.Length > 0) {
+		classname=host.TableDescription;
+	}else{
+		classname=System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(classname);
+	}
 	string ModelSpace = host.NameSpace + ".Model";
 	string QueryModelSpace = classname +"QueryModel";
 	host.Fieldlist.Sort(CodeCommon.CompareByintOrder);
@@ -65,7 +70,7 @@ public partial class <#=QueryModelSpace #>
 		/// <summary>
 		/// <#= string.IsNullOrEmpty(c.Description) ? c.ColumnName : c.Description #>
         /// </summary>		
-        public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=(CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))?"?":"") #> min<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
+        public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=(CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))?"?":"") #> before<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
         { 
          get
             {
@@ -102,7 +107,7 @@ public partial class <#=QueryModelSpace #>
         /// <summary>
 		/// <#= string.IsNullOrEmpty(c.Description) ? c.ColumnName : c.Description #>
         /// </summary>		
-     public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=((CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName)) ) ? "?":"") #> max<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
+     public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=((CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName)) ) ? "?":"") #> after<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
         {
         get
             { 
