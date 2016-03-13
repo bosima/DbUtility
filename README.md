@@ -1,5 +1,5 @@
 # DbUtility
-Relational database operation utility class library.
+Relational database operation utility class library, support SQLServer and MySQL.
 
 ModelQuery
 通过定义一个查询类及其属性实现对特定业务数据的查询操作。
