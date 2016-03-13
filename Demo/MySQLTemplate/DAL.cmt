@@ -18,7 +18,7 @@
 		classname=System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(classname);
 	}
 	
-	host.NameSpace="FireflySoft";	
+	host.NameSpace="Demo.MySQLModelQuery";	
 	string ModelSpace = host.NameSpace + ".Model."+ classname+"Model";
 	string QueryModelSpace = host.NameSpace + ".Model." + classname + "QueryModel";
 	
@@ -31,6 +31,7 @@
 #>
 using FireflySoft.DbUtility;
 using FireflySoft.DbUtility.ModelQuery;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -52,7 +53,7 @@ public partial class <#=classname  #>DAL
 		public bool Exists(<#= CodeCommon.GetInParameter(host.Keys, false) #>)
 		{
 			StringBuilder strSql=new StringBuilder();
-			strSql.Append("select count(1) from <#= host.TableName #>");
+			strSql.Append("select count(1) from `<#= host.TableName #>`");
 			strSql.Append(" where ");
 <# for(int i=0;i< host.Keys.Count;i++){ColumnInfo key = host.Keys[i]; #>
 			<# if (key.IsPrimaryKey || !key.IsIdentity){#>strSql.Append(" <#= key.ColumnName#> = <#=preParameter#><#=key.ColumnName#> <# if (i< host.Keys.Count-1 ) {#>and <#}#> ");
@@ -68,19 +69,19 @@ public partial class <#=classname  #>DAL
 		public int Add(<#= ModelSpace #> model)
 		{
 			StringBuilder strSql=new StringBuilder();
-			strSql.Append("insert into <#= host.TableName #>(");			
-            strSql.Append("<# for(int i=0;i< host.Fieldlist.Count;i++) {   ColumnInfo c = host.Fieldlist[i]; if (!c.IsIdentity) {#>[<#= c.ColumnName#>]<# if (i< host.Fieldlist.Count-1 ) {#>,<#}#><#}}#>");
+			strSql.Append("insert into `<#= host.TableName #>`(");			
+            strSql.Append("<# for(int i=0;i< host.Fieldlist.Count;i++) {   ColumnInfo c = host.Fieldlist[i]; if (!c.IsIdentity) {#>`<#= c.ColumnName#>`<# if (i< host.Fieldlist.Count-1 ) {#>,<#}#><#}}#>");
 			strSql.Append(") values (");
             strSql.Append("<# for(int i=0;i< host.Fieldlist.Count;i++) {   ColumnInfo c = host.Fieldlist[i]; if (!c.IsIdentity) {#><#=preParameter#><#= c.ColumnName#><# if (i< host.Fieldlist.Count-1 ) {#>,<#}#><#}}#>");            
             strSql.Append(") ");            
             <#if (identityKey!=null) {#>strSql.Append(";select @@IDENTITY");<#}#>		
-			SqlParameter[] parameters = {
+			MySqlParameter[] parameters = {
 			<# for(int i=0;i< host.Fieldlist.Count;i++)
             {   
             ColumnInfo c = host.Fieldlist[i];
             if(c.IsIdentity) continue;
             #>
-            new SqlParameter("<#=preParameter#><#=c.ColumnName#>", MySqlDbType.<#=CodeCommon.DbTypeLength(host.DbType, c.TypeName, c.Length)#>) <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#>            
+            new MySqlParameter("<#=preParameter#><#=c.ColumnName#>", MySqlDbType.<#=CodeCommon.DbTypeLength(host.DbType, c.TypeName, c.Length)#>) <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#>            
             <# }#>  
             };
 			<# foreach (ColumnInfo c in host.Fieldlist) { if(c.IsIdentity) continue;#>            
@@ -128,18 +129,18 @@ public partial class <#=classname  #>DAL
 		public bool Update(<#= ModelSpace #> model)
 		{
 			StringBuilder strSql=new StringBuilder();
-			strSql.Append("update <#= host.TableName #> set ");
+			strSql.Append("update `<#= host.TableName #>` set ");
 			<# for(int i=0;i< host.Fieldlist.Count;i++)
             {   ColumnInfo c = host.Fieldlist[i]; #>
             <# if (!c.IsIdentity) {#>            
-            strSql.Append(" [<#= c.ColumnName #>] = <#=preParameter#><#=c.ColumnName#> <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#> ");<# }#>
+            strSql.Append(" `<#= c.ColumnName #>` = <#=preParameter#><#=c.ColumnName#> <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#> ");<# }#>
             <# }#>			
 			strSql.Append(" where <#= CodeCommon.GetWhereParameterExpression(host.Keys, true ,host.DbType) #> ");
 						
-			SqlParameter[] parameters = {
+			MySqlParameter[] parameters = {
 			<# for(int i=0;i< host.Fieldlist.Count;i++)
             {   ColumnInfo c = host.Fieldlist[i]; #>
-            new SqlParameter("<#=preParameter#><#=c.ColumnName#>", MySqlDbType.<#=CodeCommon.DbTypeLength(host.DbType, c.TypeName, c.Length)#>) <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#>
+            new MySqlParameter("<#=preParameter#><#=c.ColumnName#>", MySqlDbType.<#=CodeCommon.DbTypeLength(host.DbType, c.TypeName, c.Length)#>) <# if (i< host.Fieldlist.Count-1 ) {#>,<#}#>
             
             <# }#>  
             };
@@ -166,7 +167,7 @@ public partial class <#=classname  #>DAL
 		{
 			
 			StringBuilder strSql=new StringBuilder();
-			strSql.Append("delete from <#= host.TableName #> ");
+			strSql.Append("delete from `<#= host.TableName #>` ");
 			strSql.Append(" where <#= CodeCommon.GetWhereParameterExpression(host.Keys, true, host.DbType)#>");
 			<#= CodeCommon.GetPreParameter(host.Keys, true, host.DbType) #>
 
@@ -188,7 +189,7 @@ public partial class <#=classname  #>DAL
 		public bool DeleteList(string <#=identityKey.ColumnName#>list )
 		{
 			StringBuilder strSql=new StringBuilder();
-			strSql.Append("delete from <#= host.TableName #> ");
+			strSql.Append("delete from `<#= host.TableName #>` ");
 			strSql.Append(" where ID in ("+<#=identityKey.ColumnName#>list + ")  ");
 			int rows=<#= host.DbHelperName#>.ExecuteSql(strSql.ToString());
 			if (rows > 0)
@@ -269,7 +270,7 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
 			
 			StringBuilder strSql=new StringBuilder();
 			strSql.Append("select * ");			
-			strSql.Append("  from <#= host.TableName #> ");
+			strSql.Append("  from `<#= host.TableName #>` ");
 			strSql.Append(" where <#= CodeCommon.GetWhereParameterExpression(host.Keys, true, host.DbType) #>");
 			<#=CodeCommon.GetPreParameter(host.Keys, true, host.DbType)#>
 			
@@ -292,13 +293,13 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
 		public List<<#= ModelSpace #>> GetList(<#=QueryModelSpace#> query)
 		{
 		 	// 从查询条件获取SQL条件语句
-            string strWhere = ConditionToSql.ToSqlText(query.Condition);
-            SqlParameter[] paras = ConditionToSql.ToSqlParas(query.Condition);
+            string strWhere = ConditionToSql.ToMySqlText(query.Condition);
+            MySqlParameter[] paras = ConditionToSql.ToMySqlParas(query.Condition);
             
             // 构造SQL查询语句
 			StringBuilder strSql=new StringBuilder();
 			strSql.Append("select * ");
-			strSql.Append(" FROM <#= host.TableName #> ");
+			strSql.Append(" FROM `<#= host.TableName #>` ");
 			if(strWhere.Trim()!="")
 			{
 				strSql.Append(" where "+strWhere);
@@ -317,8 +318,8 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
 		public List<<#= ModelSpace #>> GetList(int Top,<#=QueryModelSpace#> query,string filedOrder)
 		{
 			// 从查询条件获取SQL条件语句
-            string strWhere = ConditionToSql.ToSqlText(query.Condition);
-            SqlParameter[] paras = ConditionToSql.ToSqlParas(query.Condition);
+            string strWhere = ConditionToSql.ToMySqlText(query.Condition);
+            MySqlParameter[] paras = ConditionToSql.ToMySqlParas(query.Condition);
             
             // 构造SQL查询语句
 			StringBuilder strSql=new StringBuilder();
@@ -328,7 +329,7 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
 				strSql.Append(" top "+Top.ToString());
 			}
 			strSql.Append(" * ");
-			strSql.Append(" FROM <#= host.TableName #> ");
+			strSql.Append(" FROM `<#= host.TableName #>` ");
 			if(strWhere.Trim()!="")
 			{
 				strSql.Append(" where "+strWhere);
@@ -349,18 +350,18 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
 		public int InfoCount(<#=QueryModelSpace#> query)
 		{
 		 	// 从查询条件获取SQL条件语句
-            string strWhere = ConditionToSql.ToSqlText(query.Condition);
-            SqlParameter[] paras = ConditionToSql.ToSqlParas(query.Condition);
+            string strWhere = ConditionToSql.ToMySqlText(query.Condition);
+            MySqlParameter[] paras = ConditionToSql.ToMySqlParas(query.Condition);
             
 			return InfoCount(strWhere,paras);
 		}
 		/// <summary>
         /// 获得记录数，不包含逻辑删除记录
         /// </summary>
-        private int InfoCount(string strWhere, SqlParameter[] paras)
+        private int InfoCount(string strWhere, MySqlParameter[] paras)
         {
             string strTableName = "<#= host.TableName #>";
-            return DbHelperSQL.GetCount(strTableName, strWhere, paras);
+            return <#= host.DbHelperName#>.GetCount(strTableName, strWhere, paras);
         }
 		
 		/// <summary>
@@ -376,15 +377,15 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
         	//}
         	
             // 从查询条件获取SQL条件语句
-            string strWhere = ConditionToSql.ToSqlText(query.Condition);
-            SqlParameter[] paras = ConditionToSql.ToSqlParas(query.Condition);
+            string strWhere = ConditionToSql.ToMySqlText(query.Condition);
+            MySqlParameter[] paras = ConditionToSql.ToMySqlParas(query.Condition);
 
             // 总记录数
             page.RecordCount = InfoCount(strWhere, paras);
 
             // 分页数据
             string strSQL = MySQLPageQueryHelper.GetPageSQL(page.CurrentPage, page.PageSize, strWhere, sortFiled, "<#= host.TableName #>");
-            DataSet ds = DbHelperSQL.Query(strSQL, paras);
+            DataSet ds = <#= host.DbHelperName#>.Query(strSQL, paras);
             
             return DataTableToList(ds.Tables[0]);
         }

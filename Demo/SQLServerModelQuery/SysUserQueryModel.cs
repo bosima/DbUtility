@@ -6,7 +6,7 @@ using System.Linq;
 using System.Data.SqlTypes;
 using FireflySoft.DbUtility.ModelQuery;
 
-namespace Demo.ModelQuery.Model
+namespace Demo.SQLServerModelQuery.Model
 {
 
     /// <summary>

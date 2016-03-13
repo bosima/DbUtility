@@ -1,5 +1,7 @@
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Text;
 
@@ -11,11 +13,31 @@ namespace FireflySoft.DbUtility.ModelQuery
     public class ConditionToSql
     {
         /// <summary>
-        /// 转换查询条件数组为Sql文本
+        /// 转换查询条件数组为SqlServer文本
         /// </summary>
         /// <param name="conditionArray"></param>
         /// <returns></returns>
         public static string ToSqlText(QueryCondition[] conditionArray)
+        {
+            return ToDbSqlText(conditionArray, "[]");
+        }
+
+        /// <summary>
+        /// 转换查询条件数组为MySql文本
+        /// </summary>
+        /// <param name="conditionArray"></param>
+        /// <returns></returns>
+        public static string ToMySqlText(QueryCondition[] conditionArray)
+        {
+            return ToDbSqlText(conditionArray, "``");
+        }
+
+        /// <summary>
+        /// 转换查询条件数组为Sql文本
+        /// </summary>
+        /// <param name="conditionArray"></param>
+        /// <returns></returns>
+        public static string ToDbSqlText(QueryCondition[] conditionArray, string escapeSymbol)
         {
             StringBuilder stringBuilder = new StringBuilder();
 
@@ -25,7 +47,7 @@ namespace FireflySoft.DbUtility.ModelQuery
                 for (int i = 0; i < conditionArray.Length; i++)
                 {
                     QueryCondition conditon = conditionArray[i];
-                    stringBuilder.Append(ConditionToSql.ToSubSqlText(conditon, parameterDictionary));
+                    stringBuilder.Append(ConditionToSql.ToSubSqlText(conditon, parameterDictionary, escapeSymbol));
                 }
 
                 parameterDictionary.Clear();
@@ -36,13 +58,50 @@ namespace FireflySoft.DbUtility.ModelQuery
         }
 
         /// <summary>
-        /// 转换查询条件数组为Sql参数
+        /// 转换查询条件数组为SqlServer参数
         /// </summary>
         /// <param name="conditionArray"></param>
         /// <returns></returns>
         public static SqlParameter[] ToSqlParas(QueryCondition[] conditionArray)
         {
-            List<SqlParameter> parameterList = new List<SqlParameter>();
+            var paras = ToDbSqlParas(conditionArray, DbType.SQLServer);
+            var sqlParas = new SqlParameter[paras.Length];
+
+            for (int i = 0; i < paras.Length; i++)
+            {
+                sqlParas[i] = (SqlParameter)paras[i];
+            }
+
+            return sqlParas;
+        }
+
+        /// <summary>
+        /// 转换查询条件数组为MySql参数
+        /// </summary>
+        /// <param name="conditionArray"></param>
+        /// <returns></returns>
+        public static MySqlParameter[] ToMySqlParas(QueryCondition[] conditionArray)
+        {
+            var paras = ToDbSqlParas(conditionArray, DbType.MySQL);
+            var mySQLParas = new MySqlParameter[paras.Length];
+
+            for (int i = 0; i < paras.Length; i++)
+            {
+                mySQLParas[i] = (MySqlParameter)paras[i];
+            }
+
+            return mySQLParas;
+        }
+
+        /// <summary>
+        /// 转换查询条件数组为基类Db参数
+        /// </summary>
+        /// <param name="conditionArray"></param>
+        /// <param name="dbType"></param>
+        /// <returns></returns>
+        private static DbParameter[] ToDbSqlParas(QueryCondition[] conditionArray, DbType dbType)
+        {
+            List<DbParameter> parameterList = new List<DbParameter>();
 
             if (conditionArray != null && conditionArray.Length > 0)
             {
@@ -50,7 +109,7 @@ namespace FireflySoft.DbUtility.ModelQuery
                 for (int i = 0; i < conditionArray.Length; i++)
                 {
                     QueryCondition conditon = conditionArray[i];
-                    ConditionToSql.ToSubSqlParas(conditon, parameterList, parameterDictionary);
+                    ConditionToSql.ToSubSqlParas(conditon, parameterList, parameterDictionary, dbType);
                 }
 
                 parameterDictionary.Clear();
@@ -87,7 +146,7 @@ namespace FireflySoft.DbUtility.ModelQuery
         /// <param name="conditon"></param>
         /// <param name="parameterDictionary"></param>
         /// <returns></returns>
-        private static string ToSubSqlText(QueryCondition conditon, Dictionary<string, int> parameterDictionary)
+        private static string ToSubSqlText(QueryCondition conditon, Dictionary<string, int> parameterDictionary, string escapeSymbol)
         {
             if (conditon != null && ConditionToSql.CheckConditionIsValid(conditon))
             {
@@ -105,7 +164,7 @@ namespace FireflySoft.DbUtility.ModelQuery
                     for (int i = 0; i < subQuery.Length; i++)
                     {
                         QueryCondition subConditon = subQuery[i];
-                        subSqlText += ConditionToSql.ToSubSqlText(subConditon, parameterDictionary);
+                        subSqlText += ConditionToSql.ToSubSqlText(subConditon, parameterDictionary, escapeSymbol);
                     }
 
                     if (!string.IsNullOrEmpty(subSqlText))
@@ -117,7 +176,9 @@ namespace FireflySoft.DbUtility.ModelQuery
                 }
                 else
                 {
+                    stringBuilder.Append(escapeSymbol[0]);
                     stringBuilder.Append(conditon.Property.ToString());
+                    stringBuilder.Append(escapeSymbol[1]);
                     stringBuilder.Append(" ");
                     stringBuilder.Append(ConditionToSql.GetCompareType(conditon));
                     stringBuilder.Append(" ");
@@ -147,7 +208,7 @@ namespace FireflySoft.DbUtility.ModelQuery
         /// <param name="conditon"></param>
         /// <param name="parameterList"></param>
         /// <param name="parameterDictionary"></param>
-        private static void ToSubSqlParas(QueryCondition conditon, List<SqlParameter> parameterList, Dictionary<string, int> parameterDictionary)
+        private static void ToSubSqlParas(QueryCondition conditon, List<DbParameter> parameterList, Dictionary<string, int> parameterDictionary, DbType dbType)
         {
             if (conditon != null && ConditionToSql.CheckConditionIsValid(conditon))
             {
@@ -157,13 +218,13 @@ namespace FireflySoft.DbUtility.ModelQuery
                     for (int i = 0; i < subQuery.Length; i++)
                     {
                         QueryCondition subConditon = subQuery[i];
-                        ConditionToSql.ToSubSqlParas(subConditon, parameterList, parameterDictionary);
+                        ConditionToSql.ToSubSqlParas(subConditon, parameterList, parameterDictionary, dbType);
                     }
                 }
 
                 if (!string.IsNullOrEmpty(conditon.Property.ToString()))
                 {
-                    ConditionToSql.GetParameterObject(conditon, parameterList, parameterDictionary);
+                    ConditionToSql.GetParameterObject(conditon, parameterList, parameterDictionary, dbType);
                 }
             }
         }
@@ -251,7 +312,7 @@ namespace FireflySoft.DbUtility.ModelQuery
         /// <param name="parameterList"></param>
         /// <param name="parameterDictionary"></param>
         /// <returns></returns>
-        private static string GetParameterObject(QueryCondition conditon, List<SqlParameter> parameterList, Dictionary<string, int> parameterDictionary)
+        private static string GetParameterObject(QueryCondition conditon, List<DbParameter> parameterList, Dictionary<string, int> parameterDictionary, DbType dbType)
         {
             string parameterName = string.Empty;
             string conditionName = conditon.ConditionName.ToString();
@@ -270,7 +331,7 @@ namespace FireflySoft.DbUtility.ModelQuery
                     var tmpParameterName = "@" + conditionName;
                     tmpParameterName = GetUniqueParameterName(tmpParameterName, parameterDictionary);
 
-                    parameterList.Add(ConditionToSql.CreateParameterObject(tmpParameterName, v));
+                    parameterList.Add(ConditionToSql.CreateParameterObject(tmpParameterName, v, dbType));
                 }
             }
             else
@@ -293,7 +354,7 @@ namespace FireflySoft.DbUtility.ModelQuery
 
                 parameterName = GetUniqueParameterName(parameterName, parameterDictionary);
 
-                parameterList.Add(ConditionToSql.CreateParameterObject(parameterName, conditon.Value));
+                parameterList.Add(ConditionToSql.CreateParameterObject(parameterName, conditon.Value, dbType));
             }
 
             return parameterName;
@@ -383,9 +444,20 @@ namespace FireflySoft.DbUtility.ModelQuery
         /// <param name="name"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        private static SqlParameter CreateParameterObject(string name, object value)
+        private static DbParameter CreateParameterObject(string name, object value, DbType dbtype)
         {
-            return new SqlParameter(name, (value == null) ? DBNull.Value : value);
+            DbParameter para = null;
+            switch (dbtype)
+            {
+                case DbType.SQLServer:
+                    para = new SqlParameter(name, (value == null) ? DBNull.Value : value);
+                    break;
+                case DbType.MySQL:
+                    para = new MySqlParameter(name, (value == null) ? DBNull.Value : value);
+                    break;
+            }
+
+            return para;
         }
     }
 }

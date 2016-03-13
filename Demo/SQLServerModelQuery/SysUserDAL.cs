@@ -6,7 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 
-namespace Demo.ModelQuery.DAL
+namespace Demo.SQLServerModelQuery.DAL
 {
     /// <summary>
     /// SysUser
@@ -30,7 +30,7 @@ namespace Demo.ModelQuery.DAL
         /// <summary>
         /// 增加一条数据
         /// </summary>
-        public int Add(Demo.ModelQuery.Model.SysUserModel model)
+        public int Add(Demo.SQLServerModelQuery.Model.SysUserModel model)
         {
             StringBuilder strSql = new StringBuilder();
             strSql.Append("insert into SysUser(");
@@ -80,7 +80,7 @@ namespace Demo.ModelQuery.DAL
         /// <summary>
         /// 更新一条数据
         /// </summary>
-        public bool Update(Demo.ModelQuery.Model.SysUserModel model)
+        public bool Update(Demo.SQLServerModelQuery.Model.SysUserModel model)
         {
             StringBuilder strSql = new StringBuilder();
             strSql.Append("update SysUser set ");
@@ -181,16 +181,16 @@ namespace Demo.ModelQuery.DAL
         /// <summary>
         /// 获得数据列表
         /// </summary>
-        private List<Demo.ModelQuery.Model.SysUserModel> DataTableToList(DataTable dt)
+        private List<Demo.SQLServerModelQuery.Model.SysUserModel> DataTableToList(DataTable dt)
         {
-            List<Demo.ModelQuery.Model.SysUserModel> modelList = new List<Demo.ModelQuery.Model.SysUserModel>();
+            List<Demo.SQLServerModelQuery.Model.SysUserModel> modelList = new List<Demo.SQLServerModelQuery.Model.SysUserModel>();
             int rowsCount = dt.Rows.Count;
             if (rowsCount > 0)
             {
-                Demo.ModelQuery.Model.SysUserModel model;
+                Demo.SQLServerModelQuery.Model.SysUserModel model;
                 for (int n = 0; n < rowsCount; n++)
                 {
-                    model = new Demo.ModelQuery.Model.SysUserModel();
+                    model = new Demo.SQLServerModelQuery.Model.SysUserModel();
                     if (dt.Rows[n]["ID"].ToString() != "")
                     {
                         model.ID = int.Parse(dt.Rows[n]["ID"].ToString());
@@ -232,7 +232,7 @@ namespace Demo.ModelQuery.DAL
         /// <summary>
         /// 得到一个对象实体
         /// </summary>
-        public Demo.ModelQuery.Model.SysUserModel GetModel(int ID)
+        public Demo.SQLServerModelQuery.Model.SysUserModel GetModel(int ID)
         {
 
             StringBuilder strSql = new StringBuilder();
@@ -245,7 +245,7 @@ namespace Demo.ModelQuery.DAL
             parameters[0].Value = ID;
 
 
-            Demo.ModelQuery.Model.SysUserModel model = new Demo.ModelQuery.Model.SysUserModel();
+            Demo.SQLServerModelQuery.Model.SysUserModel model = new Demo.SQLServerModelQuery.Model.SysUserModel();
             DataSet ds = SQLServerHelper.Query(strSql.ToString(), parameters);
 
             if (ds.Tables[0].Rows.Count > 0)
@@ -261,7 +261,7 @@ namespace Demo.ModelQuery.DAL
         /// <summary>
         /// 获取符合查询条件的全部数据
         /// </summary>
-        public List<Demo.ModelQuery.Model.SysUserModel> GetList(Demo.ModelQuery.Model.SysUserQueryModel query)
+        public List<Demo.SQLServerModelQuery.Model.SysUserModel> GetList(Demo.SQLServerModelQuery.Model.SysUserQueryModel query)
         {
             // 从查询条件获取SQL条件语句
             string strWhere = ConditionToSql.ToSqlText(query.Condition);
@@ -286,7 +286,7 @@ namespace Demo.ModelQuery.DAL
         /// <summary>
         /// 获取符合查询条件的前几行数据
         /// </summary>
-        public List<Demo.ModelQuery.Model.SysUserModel> GetList(int Top, Demo.ModelQuery.Model.SysUserQueryModel query, string filedOrder)
+        public List<Demo.SQLServerModelQuery.Model.SysUserModel> GetList(int Top, Demo.SQLServerModelQuery.Model.SysUserQueryModel query, string filedOrder)
         {
             // 从查询条件获取SQL条件语句
             string strWhere = ConditionToSql.ToSqlText(query.Condition);
@@ -318,7 +318,7 @@ namespace Demo.ModelQuery.DAL
         /// <summary>
         /// 获取符合查询条件的全部记录数
         /// </summary>
-        public int InfoCount(Demo.ModelQuery.Model.SysUserQueryModel query)
+        public int InfoCount(Demo.SQLServerModelQuery.Model.SysUserQueryModel query)
         {
             // 从查询条件获取SQL条件语句
             string strWhere = ConditionToSql.ToSqlText(query.Condition);
@@ -341,7 +341,7 @@ namespace Demo.ModelQuery.DAL
         /// <param name="query">查询条件</param>
         /// <param name="page">分页条件</param>
         /// <returns></returns>
-        public List<Demo.ModelQuery.Model.SysUserModel> GetList(Demo.ModelQuery.Model.SysUserQueryModel query, string sortFiled, ref PageInfo page)
+        public List<Demo.SQLServerModelQuery.Model.SysUserModel> GetList(Demo.SQLServerModelQuery.Model.SysUserQueryModel query, string sortFiled, ref PageInfo page)
         {
             //if(string.IsNullOrEmpty(sortFiled)){
             //	sortFiled="AddTime DESC";

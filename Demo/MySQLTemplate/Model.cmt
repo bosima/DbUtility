@@ -1,6 +1,6 @@
 ﻿<#@ template language="c#" HostSpecific="True" #><#@ output extension= ".cs" #><#
 	TableHost host = (TableHost)(Host);
-	host.NameSpace="FireflySoft";
+	host.NameSpace="Demo.MySQLModelQuery";
 	string classname=host.GetModelClass(host.TableName).Replace("TBL_","").Replace("v_","V");	
 	if( host.TableDescription.Length > 0) {
 		classname=host.TableDescription;

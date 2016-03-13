@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ModelQuery\DbType.cs" />
     <Compile Include="ModelQuery\MySQLPageQueryHelper.cs" />
     <Compile Include="MySQLHelper.cs" />
     <Compile Include="SQLServerHelper.cs" />

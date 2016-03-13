@@ -16,7 +16,7 @@ namespace FireflySoft.DbUtility
     /// </summary>
     public class MySQLHelper
     {
-        public static string connectionString = ConfigurationManager.AppSettings["DbConnectionString"];
+        public static string connectionString = ConfigurationManager.AppSettings["MySQLConn"];
 
         /// <summary>
         /// 设置连接字符串
@@ -94,7 +94,7 @@ namespace FireflySoft.DbUtility
         /// <returns></returns>
         public static int GetCount(string tableName, string sqlCondition)
         {
-            string sql = "select count(1) from " + tableName;
+            string sql = "select count(1) from `" + tableName + "`";
 
             if (!string.IsNullOrWhiteSpace(sqlCondition))
             {
@@ -122,7 +122,7 @@ namespace FireflySoft.DbUtility
         /// <returns></returns>
         public static int GetCount(string tableName, string sqlCondition, MySqlParameter[] paras)
         {
-            string sql = "select count(1) from " + tableName;
+            string sql = "select count(1) from `" + tableName + "`";
 
             if (!string.IsNullOrWhiteSpace(sqlCondition))
             {

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-namespace Demo.ModelQuery.Model
+
+namespace Demo.SQLServerModelQuery.Model
 {
     /// <summary>
     /// SysUser

@@ -2,7 +2,7 @@
 <#@ output extension= ".cs" #>
 <#
 	TableHost host = (TableHost)(Host);
-	host.NameSpace="FireflySoft";
+	host.NameSpace="Demo.MySQLModelQuery";
 	string classname=host.GetModelClass(host.TableName).Replace("TBL_","").Replace("v_","V");	
 	if( host.TableDescription.Length > 0) {
 		classname=host.TableDescription;
@@ -62,25 +62,63 @@ public partial class <#=QueryModelSpace #>
                 }
             }
         }
+        
       	<# foreach (ColumnInfo c in host.Fieldlist)
 		{ #>
 		
-		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime")
+		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime"||CodeCommon.DbTypeToCS(c.TypeName)=="int")
 		{#>
 		/// <summary>
 		/// <#= string.IsNullOrEmpty(c.Description) ? c.ColumnName : c.Description #>
         /// </summary>		
-        public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=(CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))?"?":"") #> before<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
+        public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=(CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))?"?":"") #> <#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
         { 
          get
             {
-                var con = m_ConditionList.Where(t => t.ConditionName == "<#= c.ColumnName #>").Where(t => t.CompareType == CompareType.GET).FirstOrDefault();
+                var con = m_ConditionList.Where(t => t.ConditionName == "<#= c.ColumnName #>").FirstOrDefault();
                 if (con != null)
                 {
                     return (<#= CodeCommon.DbTypeToCS(c.TypeName) #>)con.Value;
                 }
                 
-        <# if(c.Nullable&&CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))){ #>
+        <# if(c.Nullable||CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))){ #>
+        return null;
+        <# } else{#>     
+		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime"){ #>
+        return SqlDateTime.MinValue.Value;
+        <# } #>
+        <# } #>
+}
+
+            set
+            {
+            	if(value!=null){
+	            	m_ConditionList.Add(new QueryCondition()
+	                {
+	                    CompareType = CompareType.Equal,
+	                    LinkType = LinkType.And,
+	                    Property = "<#= c.ColumnName #>",
+	                    ConditionName = "<#= c.ColumnName #>",
+	                    Value = value
+	                });
+                }
+            }
+        }  
+        
+		/// <summary>
+		/// <#= string.IsNullOrEmpty(c.Description) ? c.ColumnName : c.Description #>
+        /// </summary>		
+        public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=(CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))?"?":"") #> min<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
+        { 
+         get
+            {
+                var con = m_ConditionList.Where(t => t.ConditionName == "min<#= c.ColumnName #>").FirstOrDefault();
+                if (con != null)
+                {
+                    return (<#= CodeCommon.DbTypeToCS(c.TypeName) #>)con.Value;
+                }
+                
+        <# if(c.Nullable||CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))){ #>
         return null;
         <# } else{#>     
 		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime"){ #>
@@ -97,7 +135,7 @@ public partial class <#=QueryModelSpace #>
 	                    CompareType = CompareType.GET,
 	                    LinkType = LinkType.And,
 	                    Property = "<#= c.ColumnName #>",
-	                    ConditionName = "<#= c.ColumnName #>",
+	                    ConditionName = "min<#= c.ColumnName #>",
 	                    Value = value
 	                });
                 }
@@ -107,17 +145,17 @@ public partial class <#=QueryModelSpace #>
         /// <summary>
 		/// <#= string.IsNullOrEmpty(c.Description) ? c.ColumnName : c.Description #>
         /// </summary>		
-     public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=((CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName)) ) ? "?":"") #> after<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
+     public <#= CodeCommon.DbTypeToCS(c.TypeName) #><#=((CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName)) ) ? "?":"") #> max<#= System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(c.ColumnName) #>
         {
         get
             { 
-                var con = m_ConditionList.Where(t => t.ConditionName == "<#= c.ColumnName #>").Where(t => t.CompareType == CompareType.LET).FirstOrDefault();
+                var con = m_ConditionList.Where(t => t.ConditionName == "max<#= c.ColumnName #>").FirstOrDefault();
                 if (con != null)
                 {
                     return (<#= CodeCommon.DbTypeToCS(c.TypeName) #>)con.Value;
                 }
                 
-        <# if(c.Nullable&&CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))){ #>
+        <# if(c.Nullable||CodeCommon.isValueType(CodeCommon.DbTypeToCS(c.TypeName))){ #>
         return null;
         <# } else{#> 
 		<# if(CodeCommon.DbTypeToCS(c.TypeName)=="DateTime"){ #>
@@ -133,7 +171,7 @@ public partial class <#=QueryModelSpace #>
 	                    CompareType = CompareType.LET,
 	                    LinkType = LinkType.And,
 	                    Property = "<#= c.ColumnName #>",
-	                    ConditionName = "<#= c.ColumnName #>",
+	                    ConditionName = "max<#= c.ColumnName #>",
 	                    Value = value
 	                });
                 }
