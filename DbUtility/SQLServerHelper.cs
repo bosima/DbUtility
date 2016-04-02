@@ -383,9 +383,9 @@ namespace FireflySoft.DbUtility
                                 int val = cmd.ExecuteNonQuery();
 
                                 cmd.Parameters.Clear();
-
-                                trans.Commit();
                             }
+
+                            trans.Commit();
                         }
                         catch (SqlException ex)
                         {
