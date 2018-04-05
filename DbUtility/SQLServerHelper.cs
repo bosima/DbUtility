@@ -607,8 +607,8 @@ namespace FireflySoft.DbUtility
             SqlCommand command = PrepareTransCommand(connection, storedProcName, parameters);
 
             command.Parameters.Add(new SqlParameter("ReturnValue",
-                SqlDbType.Int, 4, ParameterDirection.ReturnValue,
-                false, 0, 0, string.Empty, DataRowVersion.Default, null));
+                SqlDbType.Int, 4, string.Empty));
+
             return command;
         }
 

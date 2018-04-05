@@ -287,7 +287,7 @@ namespace Demo.MySQLModelQuery.DAL
         /// <summary>
         /// 获取符合查询条件的前几行数据
         /// </summary>
-        public List<Demo.MySQLModelQuery.Model.SysUserModel> GetList(int Top, Demo.MySQLModelQuery.Model.SysUserQueryModel query, string filedOrder)
+        public List<Demo.MySQLModelQuery.Model.SysUserModel> GetList(int top, Demo.MySQLModelQuery.Model.SysUserQueryModel query, string filedOrder)
         {
             // 从查询条件获取SQL条件语句
             string strWhere = ConditionToSql.ToMySqlText(query.Condition);
@@ -296,10 +296,6 @@ namespace Demo.MySQLModelQuery.DAL
             // 构造SQL查询语句
             StringBuilder strSql = new StringBuilder();
             strSql.Append("select ");
-            if (Top > 0)
-            {
-                strSql.Append(" top " + Top.ToString());
-            }
             strSql.Append(" * ");
             strSql.Append(" FROM `sysuser` ");
             if (strWhere.Trim() != "")
@@ -307,7 +303,10 @@ namespace Demo.MySQLModelQuery.DAL
                 strSql.Append(" where " + strWhere);
             }
             strSql.Append(" order by " + filedOrder);
-
+            if (top > 0)
+            {
+                strSql.Append(" limit 0," + top.ToString());
+            }
 
             // 执行查询
             DataSet ds = MySQLHelper.Query(strSql.ToString(), paras);

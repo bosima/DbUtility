@@ -315,7 +315,7 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
 		/// <summary>
 		/// 获取符合查询条件的前几行数据
 		/// </summary>
-		public List<<#= ModelSpace #>> GetList(int Top,<#=QueryModelSpace#> query,string filedOrder)
+		public List<<#= ModelSpace #>> GetList(int top,<#=QueryModelSpace#> query,string filedOrder)
 		{
 			// 从查询条件获取SQL条件语句
             string strWhere = ConditionToSql.ToMySqlText(query.Condition);
@@ -324,10 +324,6 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
             // 构造SQL查询语句
 			StringBuilder strSql=new StringBuilder();
 			strSql.Append("select ");
-			if(Top>0)
-			{
-				strSql.Append(" top "+Top.ToString());
-			}
 			strSql.Append(" * ");
 			strSql.Append(" FROM `<#= host.TableName #>` ");
 			if(strWhere.Trim()!="")
@@ -335,7 +331,10 @@ model.<#=c.ColumnName#>= dt.Rows[n]["<#=c.ColumnName#>"].ToString();
 				strSql.Append(" where "+strWhere);
 			}
 			strSql.Append(" order by " + filedOrder);
-			
+			if(top>0)
+			{
+				strSql.Append(" limit 0,"+top.ToString());
+			}
 			
 			// 执行查询
 			DataSet ds = <#= host.DbHelperName#>.Query(strSql.ToString(), paras);
